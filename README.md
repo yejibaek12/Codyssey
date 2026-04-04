@@ -181,12 +181,132 @@ c62fc68e0a62   ubuntu        "/bin/bash"   20 minutes ago   Up 3 minutes        
 ````
 # 6. 기존 Dockerfile 기반 커스텀 이미지 제작
 ## (1) 베이스 이미지
-FROM ubuntu:22.04 
+FROM ubuntu:22.04
 ## (2) 커스텀 포인트
-### 1. 네트워크 도구 설치
-RUN apt-get update && apt-get install -y curl
-### 2. 환경 변수로 사용자 이름 등록
-ENV USER_NAME="Yeji"
-### 3. 컨테이너 시작 위치를 /data 폴더로 지정
-WORKDIR /data
-## (3) 빌드 및 실행 결과
+### 1. nginx, 네트워크 도구 설치
+RUN apt-get update && apt-get install -y nginx curl
+### 2. 환경 변수로 이름 등록
+ENV MY_NAME="Yeji"
+### 3. 컨Nginx가 보여줄 기본 페이지 수정
+RUN echo "<h1>Hello from Yeji's Nginx Server!</h1><p>My name is $MY_NAME</p>" > /var/www/html/index.html
+## (3) 빌드 
+```bash
+$ docker build -t my-nginx-ubuntu .
+[+] Building 31.2s (7/7) FINISHED                                                                                                  docker:orbstack
+ => [internal] load build definition from dockerfile                                                                                          0.1s
+ => => transferring dockerfile: 601B                                                                                                          0.0s
+ => [internal] load metadata for docker.io/library/ubuntu:22.04                                                                               0.0s
+ => [internal] load .dockerignore                                                                                                             0.1s
+ => => transferring context: 2B                                                                                                               0.0s
+ => CACHED [1/3] FROM docker.io/library/ubuntu:22.04                                                                                          0.0s
+ => [2/3] RUN apt-get update && apt-get install -y nginx curl                                                                                29.4s
+ => [3/3] RUN echo "<h1>Hello from Yeji's Nginx Server!</h1><p>My name is Yeji</p>" > /var/www/html/index.html                                0.5s 
+ => exporting to image                                                                                                                        0.8s 
+ => => exporting layers                                                                                                                       0.7s 
+ => => writing image sha256:39b9298cc07020c6901f6d43367be0eadde0400866dc2a6ceff76f255255f5c3                                                  0.0s 
+ => => naming to docker.io/library/my-nginx-ubuntu                                              
+```
+
+## (4) 실행 및 커스텀 확인 결과 
+```bash
+$ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu 
+
+$ docker exec yeji-web echo $MY_NAME
+Yeji
+
+$ curl http://localhost:8080
+<h1>Hello from Yeji's Nginx Server!</h1><p>My name is Yeji</p>
+```
+
+# 7. 포트 매핑
+## (1) 컨테이너 생성 및 포트 연결
+```bash
+$ docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu
+```
+
+## (2) 컨테이너 실행
+```bash
+$ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
+```
+# 8. Docker 볼륨 영속성 검증
+## (1) 볼륨 생성 및 컨테이너 연결
+```bash
+$ docker volume create my-db-data
+my-db-data
+
+$ docker run -it --name test-container -v my-db-data:/app/data ubuntu:22.04
+root@f08ed0da11d7:/# 
+```
+## (2) 데이터 생성 및 컨테이너 삭제
+### 1. 컨테이너 내부의 연결된 폴더에 테스트 파일 생성
+```bash
+$ cd /app/data
+$ echo "This data is persistent!" > persistence_test.txt
+$ ls
+persistence_test.txt
+$ exit
+```
+### 2. 컨테이너 삭제
+```bash
+$ docker rm test-container
+test-container
+```
+## (3) 데이터 유지 검증 (새 컨테이너 연결)
+### 1. 새로운 컨테이너를 동일한 볼륨에 연결하여 실행
+```bash
+$ docker run -it --name test-recovery -v my-db-data:/app/data ubuntu:22.04
+root@e584d9456a63:/# 
+```
+### 2. 데이터 확인
+```bash
+$ cat /app/data/persistence_test.txt
+This data is persistent!
+```
+# 9. Git 설정 및 GitHub 연동
+## (1) Git 사용자 정보 설정
+### 1. 사용자 이름 밒 이메일 설정
+```bash
+$ git config --global user.name "yejibaek12"
+$ git config --global user.email "byjol@naver.com"
+```
+### 2. 설정 결과 확인
+```bash
+$ git config --list | grep user
+user.name=yejibaek12
+user.email=byjol@naver.com
+```
+## (2) 로컬 저장소 초기화 및 커밋 
+### 1. 현재 폴더를 Git 저장소로 초기화
+```bash
+$ git init
+```
+### 2. 기본 브랜치 이름을 main으로 변경
+```bash
+$ git config --global init.defaultBranch main
+```
+### 3. 모든 파일 스테이징
+```bash
+$ git add .
+```
+
+### 4. 커밋 생성
+```bash
+$ git commit -m "Add Docker volume test results"
+```
+## (3) GitHub 원격 저장소 연동 (최초 연결)
+### 1. GitHub 원격 저장소 주소 등록
+```bash
+$ git remote add origin https://github.com/yejibaek12/260404.git
+```
+### 2. 연동 상태 확인
+```bash
+$ git remote -v
+origin  https://github.com/yejibaek12/260404.git (fetch)
+origin  https://github.com/yejibaek12/260404.git (push)
+```
+## (4) GitHub로 파일 업로드
+```bash
+$ git push -u origin main
+# 최초 실행 시에만 -u 옵션을 사용하여 원격 브랜치와 연결
+# 이후부터는 간단히 git push 만으로 업로드 가능
+```
