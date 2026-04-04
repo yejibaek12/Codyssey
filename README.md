@@ -179,3 +179,8 @@ CONTAINER ID   IMAGE         COMMAND       CREATED          STATUS              
 c62fc68e0a62   ubuntu        "/bin/bash"   20 minutes ago   Up 3 minutes                          my-ubuntu
 0745191144d5   hello-world   "/hello"      37 minutes ago   Exited (0) 37 minutes ago             my-hello-world
 ````
+# 6. 기존 Dockerfile 기반 커스텀 이미지 제작
+## (1) 베이스 이미지
+FROM ubuntu:22.04 
+## (2) 커스텀 포인트
+## (3) 빌드 및 실행 결과
