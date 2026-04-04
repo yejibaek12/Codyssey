@@ -183,4 +183,10 @@ c62fc68e0a62   ubuntu        "/bin/bash"   20 minutes ago   Up 3 minutes        
 ## (1) 베이스 이미지
 FROM ubuntu:22.04 
 ## (2) 커스텀 포인트
+### 1. 네트워크 도구 설치
+RUN apt-get update && apt-get install -y curl
+### 2. 환경 변수로 사용자 이름 등록
+ENV USER_NAME="Yeji"
+### 3. 컨테이너 시작 위치를 /data 폴더로 지정
+WORKDIR /data
 ## (3) 빌드 및 실행 결과
