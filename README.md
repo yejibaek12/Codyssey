@@ -228,6 +228,12 @@ $ docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu
 ```bash
 $ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
 ```
+
+## (3) 최종 결과 확인
+- **접속 주소:** http://localhost:8080
+
+![Nginx 서버 접속 결과](result.png)
+
 # 8. Docker 볼륨 영속성 검증
 ## (1) 볼륨 생성 및 컨테이너 연결
 ```bash
@@ -306,7 +312,7 @@ origin  https://github.com/yejibaek12/260404.git (push)
 ```
 ## (4) GitHub로 파일 업로드
 ```bash
-$ git push -u origin main
+$ git push -u origin master
 # 최초 실행 시에만 -u 옵션을 사용하여 원격 브랜치와 연결
 # 이후부터는 간단히 git push 만으로 업로드 가능
 ```
