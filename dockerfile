@@ -1,8 +1,13 @@
 # (1) 베이스 이미지
 FROM ubuntu:22.04
 
-# (2) 커스텀 포인트 1: Nginx 및 필요한 도구 설치
-RUN apt-get update && apt-get install -y nginx curl
+# (2) 커스텀 포인트 1: Nginx, Curl 설치
+apt-get update
+apt-get install -y nginx
+service nginx start
+
+apt-get install -y curl
+curl localhost
 
 # (2) 커스텀 포인트 2: 환경 변수 설정
 ENV MY_NAME="Yeji"
