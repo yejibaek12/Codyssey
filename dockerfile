@@ -1,19 +1,17 @@
 # (1) 베이스 이미지
 FROM ubuntu:22.04
 
-# (2) 커스텀 포인트 1: Nginx, Curl 설치
-apt-get update
-apt-get install -y nginx
-service nginx start
-
-apt-get install -y curl
-curl localhost
+# (2) 커스텀 포인트 1: Nginx, Curl 설치 (중간에 확인 창이 뜨지 않게 -y 옵션 사용)
+RUN apt-get update && apt-get install -y \
+nginx \
+curl
 
 # (2) 커스텀 포인트 2: 환경 변수 설정
 ENV MY_NAME="Yeji"
 
-# (2) 커스텀 포인트 3: Nginx가 보여줄 기본 페이지 수정 (글자수 안 세도 됨!)
-RUN echo "<h1>Hello from Yeji's Nginx Server!</h1><p>My name is $MY_NAME</p>" > /var/www/html/index.html
+# (2) 커스텀 포인트 3: Nginx가 보여줄 기본 페이지 수정
+# RUN echo "<h1>Hello from Yeji's Nginx Server!</h1><p>My name is $MY_NAME</p>" > /var/www/html/index.html
+COPY src/ /var/www/html/
 
-# Nginx를 백그라운드가 아닌 포그라운드에서 실행 (컨테이너 유지용)
+# (3) Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]

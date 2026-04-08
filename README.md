@@ -136,6 +136,15 @@ drwx------+ 5 byjol4324  byjol4324  160 Apr  4 15:37 .
 <br>
 
 # 5. 컨테이너 실행 실습
+### 💡 용어 정리
+> | 용어 | 정의 | 비유 |
+> | :--- | :--- | :--- |
+> | **Linux** | 프로그램이 실행되는 기본 운영체제(OS) | 요리를 할 수 있는 주방 |
+> | **Ubuntu** | 리눅스에서 가장 즐겨 쓰는 환경 세팅 | 특정 요리에 최적화된 주방 세팅 |
+> | **Docker** | 프로그램들을 독립된 상자에 담아 실행하는 시스템 | 도시락 배달 서비스(음식이 섞이지 않게 상자에 담아 관리) |
+> | **Dockerfile** | 이미지를 어떻게 만들지 적어둔 메모장 | 도시락 주문서/레시피(재료와 조리법이 적힌 종이) |
+> | **Images** | 실행만 하면 바로 프로그램이 나오는 저장 상태 | 냉동 밀키트(뜯어서 데우기만 하면 됨) |
+> | **Container** | 이미지를 실제로 실행해서 쓰고 있는 상태 | 실제로 손님 앞에 놓여서 먹을 수 있는 상태 |
 ## (1) Docker 설치 및 상태 점검
 ### 1. 버전 확인
 ```bash
@@ -152,17 +161,6 @@ Operating System: OrbStack
 ```
 
 ## (2) Docker 이미지 및 컨테이너 조작
-### 💡 용어 정리
-> | 용어 | 정의 | 비유 |
-> | :--- | :--- | :--- |
-> | **Linux** | 모든 시스템이 돌아가는 기본 바닥 | 요리를 할 수 있는 주방 |
-> | **Ubuntu** | 사리눅스 주방에서 가장 즐겨 쓰는 환경 세팅 | 한식 전용 주방 세팅 |
-> | **Docker** | 프로그램들을 독립된 상자에 담아 실행하는 시스템 | 도시락 배달 서비스(음식이 섞이지 않게 상자에 담아 관리) |
-> | **Dockerfile** | 이미지를 어떻게 만들지 적어둔 메모장 | 도시락 주문서/레시피(재료와 조리법이 적힌 종이) |
-> | **Images** | 실행만 하면 바로 프로그램이 나오는 저장 상태 | 냉동 밀키트(뜯어서 데우기만 하면 됨) |
-> | **Container** | 이미지를 실제로 실행해서 쓰고 있는 상태 | 실제로 손님 앞에 놓여서 먹을 수 있는 상태 |
-
-
 ### 1. 이미지 다운로드 및 목록 확인
 ```bash
 $ docker pull hello-world 
@@ -242,41 +240,81 @@ CONTAINER ID   IMAGE         COMMAND       CREATED          STATUS              
 c62fc68e0a62   ubuntu        "/bin/bash"   20 minutes ago   Up 3 minutes                          my-ubuntu
 0745191144d5   hello-world   "/hello"      37 minutes ago   Exited (0) 37 minutes ago             my-hello-world
 ````
+
+> **`$ docker attach my-ubuntu`로 재접속한 뒤, <br> ** `$ exit` 하는 경우에는 실행이 완전히 종료된다.
+
+<br>
+
+💡  **컨테이너 종료 방식 비교 (exit vs stop vs kill)**
+> 1. `exit` 
+> - `docker attach` 나 `exec` 로 들어간 터미널에서 입력할 때
+> - 실행 중인 메인 프로세스가 종료되면서 컨테이너도 안전하게 멈춤
+> 2. `docker stop` 
+> - 외부(호스트 터미널)에서 실행 중인 컨테이너를 멈추고 싶을 때
+> - `SIGTERM` 신호를 보내 데이터 저장 등 마무리 작업을 할 시간을 준 뒤, 응답이 없으면 종료
+> 3. `docker kill` 
+> - 컨테이너가 응답하지 않거나 즉시 강제로 종료해야할 때
+> - `SIGKILL` 신호를 보내 어떤 마무리 작업도 허용하지 않고 즉각 프로세스를 파괴함. 데이터 손실 위험 있음
+
+<br>
+
 # 6. 기존 Dockerfile 기반 커스텀 이미지 제작
-## (1) 베이스 이미지
+## (1) 웹 서버 소스코드
+```bash
+$ mkdir src/
+$ cd src/
+$ touch index.html
+```
+> 웹 서버 소스코드란? <br>
+> - 웹 사이트를 만들기 위해 작성한 설계도와 재료들을 통칭
+> - 보통 실제 웹 화면을 구성하는 원본(Source) 데이터 파일은 `src/`에, 실행 가능한 앱 설정 및 라이브러리 파일은`app/`에 담음 <br>
+>
+> | 폴더명 | 주요 포함 파일 (예시) | 설명 | 
+> | :--- | :--- | :--- | 
+> | **`src/`** (Source) | index.html, style.css, main.js | 사용자의 눈에 보이는 **웹 페이지의 뼈대, 디자인, 동작**을 담당하는 원본 소스 | 
+> | **`app/`** (Application) | server.js, app.py, config.json | 주로 웹 서버를 구동하기 위한 **백엔드 로직이나 설정 파일** |
+
+
+## (2) Dockerfile 작성
+### 1. 베이스 이미지
 ```bash 
 FROM ubuntu:22.04
 ```
-## (2) 커스텀 포인트
-### 1. Nginx, Curl 설치
+### 2. 커스텀 포인트
+#### ① Nginx, Curl 설치
 ```bash
-$ apt-get update
-$ apt-get install -y nginx
-$ service nginx start
-  * Starting nginx nginx
-
-$ apt-get install -y curl
-$ curl localhost
-<title>Welcome to nginx!</title>
+$ RUN apt-get update && apt-get install -y \
+nginx \
+curl
+# apt-get: 'Advanced Package Tool'의 약자로, 소프트웨어를 설치, 삭제, 업데이트하는 패키지 관리 도구
+# update: 어떤 프로그램의 최신 버전이 어디에 있는지 적힌 목록을 최신 상태로 업데이트하라는 뜻
+# /: 줄 바꿈
 ```
 > - Nginx(웹 서버): 컨테이너 내부에 있는 웹 페이지를 외부 사용자가 브라우저를 통해 볼 수 있도록 중간에서 연결하고 전달하는 역할
 > - Curl(네트워크 확인 도구): 설치된 웹 서버가 컨테이너 내부에서 정상적으로 작동하고 있는지 확인하기 위한 테스트 도구
 
-### 2. 환경 변수로 이름 등록
+#### ② 환경 변수로 이름 등록
 ```bash
 ENV MY_NAME="Yeji"
 ```
 > **환경 변수(ENV) 설정 이유**
 > - 목적 : 컨테이너가 기억해야 할 정보를 미리 등록하기 위함.
-> - 활용: 웹사이트 소스코드를 일일이 수정하지 않고, 이 설정값만 변경해서 문구를 한번에 변경 가능.
+> - 활용: 웹사이트 소스코드를 일일이 수정하지 않고, 이 설정값만 변경해서 문구를 한번에 변경 가능
 
-### 3. Nginx가 보여줄 기본 페이지 수정
+#### ③ Nginx가 보여줄 기본 페이지 수정
 ```bash
-RUN echo "<h1>Hello from Yeji's Nginx Server!</h1><p>My name is $MY_NAME</p>" > /var/www/html/index.html
+# RUN echo "<h1>Hello from Yeji's Nginx Server!</h1><p>My name is $MY_NAME</p>" > /var/www/html/index.html <-- 이걸 아래로 대체
+$ COPY src/ /var/www/html/
 ```
-> h1: 큰 제목 글씨체 <br>
-> p: 일반 본문 글씨체 <br>
-> /var/www/html/index.html: 이 경로에 해당 내용을 저장
+> `h1`: 큰 제목 글씨체 <br>
+> `p`: 일반 본문 글씨체 <br>
+> `/var/www/html/index.html`: 이 경로에 해당 내용을 저장
+
+#### ④ 메인 프로세스 설정
+```bash
+CMD ["nginx", "-g", "daemon off;"]
+```
+> 도커 컨테이너는 내부에 실행 중인 메인 프로세스가 종료되면 컨테이너 자체도 함께 종료됨. `Nginx`는 기본적으로 백그라운드에서 실행되는 '데몬' 방식이지만, 이를 포그라운드(`daemon off;`)에서 실행하도록 설정하여 웹 서버 컨테이너가 의도치 않게 종료되지 않고, 안정적으로 유지되도록 함. 
 
 ## (3) 빌드 
 ```bash
@@ -298,14 +336,29 @@ $ docker build -t my-nginx-ubuntu .
 
 ## (4) 실행 및 커스텀 확인 결과 
 ```bash
-$ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu 
-
-$ docker exec yeji-web echo $MY_NAME
+$ docker exec -it yeji-web bash
+$ echo $MY_NAME
 Yeji
 
-$ curl http://localhost:8080
+$ docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu
+$ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
+$ curl http://localhost:80
 <h1>Hello from Yeji's Nginx Server!</h1><p>My name is Yeji</p>
 ```
+
+⚠️ **트러블 슈팅**
+> 1. 문제 상황
+> - `docker exec -it` 명령어를 통해 컨테이너 내부로 진입 <br>
+> `docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu`, <br>
+`docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu`: bash: docker: command not found 에러 발생 <br>
+> - `$ curl http://localhost:8080`: Connection refused 에러 발생
+> 2. 원인 분석 <br>
+> - **환경 격리**: `docker` 명령어는 호스트 머신에 설치된 도구이며, 베이스 이미지(`ubuntu:22.04`)로 생성된 컨테이너 내부에는 도커가 설치되어 있지 않음
+> - **네트워크 격리**: 포트 매핑(`-p 8080:80`)은 호스트(맥북)의 8080 포트를 컨테이너의 80 포트로 연결한 것임. 컨테이너 내부의 `localhost`에는 8080 포트가 존재하지 않으며, 실제 서버는 80 포트에서 동작 중임
+> 3. 해결 방법 <br>
+> 컨테이너에서 `exit`으로 빠져나와 호스트 터미널에서 `curl http://localhost:8080`을 수행하거나, 컨테이너 내부에서는 `curl http://localhost:80`으로 포트를 수정하여 접속 확인
+
+<br>
 
 # 7. 포트 매핑
 ## (1) 컨테이너 생성 및 포트 연결
@@ -323,6 +376,8 @@ $ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
 
 ![Nginx 서버 접속 결과](result.png)
 
+<br>
+
 # 8. Docker 볼륨 영속성 검증
 ## (1) 볼륨 생성 및 컨테이너 연결
 ```bash
@@ -330,7 +385,7 @@ $ docker volume create my-db-data
 my-db-data
 
 $ docker run -it --name test-container -v my-db-data:/app/data ubuntu:22.04
-root@f08ed0da11d7:/# 
+root@f08ed0da11d7:/
 ```
 ## (2) 데이터 생성 및 컨테이너 삭제
 ### 1. 컨테이너 내부의 연결된 폴더에 테스트 파일 생성
@@ -350,7 +405,7 @@ test-container
 ### 1. 새로운 컨테이너를 동일한 볼륨에 연결하여 실행
 ```bash
 $ docker run -it --name test-recovery -v my-db-data:/app/data ubuntu:22.04
-root@e584d9456a63:/# 
+root@e584d9456a63:/
 ```
 ### 2. 데이터 확인
 ```bash
