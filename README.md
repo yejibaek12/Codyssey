@@ -417,39 +417,43 @@ $ docker run -d -p 8080:80 --name yeji-bind-test \
 ![after: 한글 깨짐 현상 해결](after.png)
 
 ## 9. Docker 볼륨
-## (1) 볼륨 생성 및 컨테이너 연결
+## (1) 볼륨 생성 및 확인
 ```bash
 $ docker volume create my-db-data
-my-db-data
-
-$ docker run -it --name test-container -v my-db-data:/app/data ubuntu:22.04
-root@f08ed0da11d7:/
+$ docker volume ls
+RIVER    VOLUME NAME
+local     my-db-data
 ```
-## (2) 데이터 생성 및 컨테이너 삭제
-### 1. 컨테이너 내부의 연결된 폴더에 테스트 파일 생성
+
+## (2) 볼륨 연결해서 컨테이너 실행
 ```bash
-$ cd /app/data
-$ echo "This data is persistent!" > persistence_test.txt
-$ ls
-persistence_test.txt
+docker run -d -p 8081:80 --name yeji-vol-test -v my-db-data:/var/www/html my-nginx-ubuntu
+```
+## (3) 검증 및 삭제 전/후 비교 실습
+### 1. 컨테이너 내부에 접속해서 테스트 파일 생성
+```bash
+$ docker exec -it yeji-vol-test bash
+$ echo "Volume is safe!" > /var/www/html/test.txt
 $ exit
 ```
+> `localhost:8081/test.txt` 접속 후 확인 
+>
+> ![사이트 접속 후 확인](8081.png)
+
 ### 2. 컨테이너 삭제
 ```bash
-$ docker rm test-container
-test-container
+$ docker rm -f yeji-vol-test 
 ```
-## (3) 데이터 유지 검증 (새 컨테이너 연결)
-### 1. 새로운 컨테이너를 동일한 볼륨에 연결하여 실행
+### 3. 새로운 컨테이너를 동일한 볼륨에 연결하여 실행
 ```bash
-$ docker run -it --name test-recovery -v my-db-data:/app/data ubuntu:22.04
-root@e584d9456a63:/
+$ docker run -d -p 8082:80 --name yeji-new-server \
+  -v my-db-data:/var/www/html \
+  my-nginx-ubuntu
 ```
-### 2. 데이터 확인
-```bash
-$ cat /app/data/persistence_test.txt
-This data is persistent!
-```
+> `localhost:8082/test.txt` 접속 후 확인
+>
+> ![사이트 접속 후 확인](8082.png)
+
 # 10. Git 설정 및 GitHub 연동
 ## (1) Git 사용자 정보 설정
 ### 1. 사용자 이름 밒 이메일 설정
