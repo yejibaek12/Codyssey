@@ -346,15 +346,15 @@ $ curl http://localhost:80
 <h1>Hello from Yeji's Nginx Server!</h1><p>My name is Yeji</p>
 ```
 
-⚠️ **트러블 슈팅**
+## ⚠️ **트러블 슈팅**
 > 1. 문제 상황
 > - `docker exec -it` 명령어를 통해 컨테이너 내부로 진입 <br>
 > `docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu`, <br>
 `docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu`: bash: docker: command not found 에러 발생 <br>
 > - `$ curl http://localhost:8080`: Connection refused 에러 발생
 > 2. 원인 분석 <br>
-> - **환경 격리**: `docker` 명령어는 호스트 머신에 설치된 도구이며, 베이스 이미지(`ubuntu:22.04`)로 생성된 컨테이너 내부에는 도커가 설치되어 있지 않음
-> - **네트워크 격리**: 포트 매핑(`-p 8080:80`)은 호스트(맥북)의 8080 포트를 컨테이너의 80 포트로 연결한 것임. 컨테이너 내부의 `localhost`에는 8080 포트가 존재하지 않으며, 실제 서버는 80 포트에서 동작 중임
+> - 환경 격리: `docker` 명령어는 호스트 머신에 설치된 도구이며, 베이스 이미지(`ubuntu:22.04`)로 생성된 컨테이너 내부에는 도커가 설치되어 있지 않음
+> - 네트워크 격리: 포트 매핑(`-p 8080:80`)은 호스트(맥북)의 8080 포트를 컨테이너의 80 포트로 연결한 것임. 컨테이너 내부의 `localhost`에는 8080 포트가 존재하지 않으며, 실제 서버는 80 포트에서 동작 중임
 > 3. 해결 방법 <br>
 > 컨테이너에서 `exit`으로 빠져나와 호스트 터미널에서 `curl http://localhost:8080`을 수행하거나, 컨테이너 내부에서는 `curl http://localhost:80`으로 포트를 수정하여 접속 확인
 
@@ -378,7 +378,42 @@ $ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
 
 <br>
 
-# 8. Docker 볼륨 영속성 검증
+# 8. 바인드 마운트
+## (1) 실행 중인 컨테이너 확인
+```bash
+$ docker ps
+CONTAINER ID   IMAGE             COMMAND                  CREATED       STATUS       PORTS                                     NAMES
+589d52cc7d82   my-nginx-ubuntu   "nginx -g 'daemon of…"   2 hours ago   Up 2 hours   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   yeji-web
+12b9e6096f02   ubuntu            "/bin/bash"              4 hours ago   Up 2 hours                                             my-ubuntu
+```
+
+## (2) 기존 컨테이너 정리하기
+```bash
+$ docker stop yeji-web
+$ docker rm yeji-web
+```
+> **기존 컨테이너 정리 이유**
+> 1. 네트워크 충돌 방지: 호스트의 특정포트(예: 8080)는 한 번에 하나의 프로세스만 점유할 수 있음. 기존 컨테이너가 8080 포트를 사용 중이면, 동일한 포트를 사용하는 새 컨테이너 실행할 때 에러가 발생함. 
+> 2. 컨테이너 이름 중복 방지: 동일한 이름을 가진 컨테이너가 존재할 경우, 같은 이름으로 새 컨테이너 생성 불가능. 
+> 3. 런타임 설정 갱신: 실행 중인 컨테이너에 실시간으로 새로운 옵션을 추가할 수 없기 때문에 변경 사항을 적용하려면 반드시 기존 컨테이너를 파기하고 새로 생성해야 함.  
+
+## (3) 바인드 마운트로 다시 실행하기(실시간 수정 확인)
+```bash 
+$ docker run -d -p 8080:80 --name yeji-bind-test \
+  -v $(pwd)/src:/var/www/html \
+  my-nginx-ubuntu
+  # `:` 를 기준으로 [내 컴퓨터 주소] : [컨테이너 주소] 
+  ```
+## ⚠️ **트러블 슈팅** 
+![before: 한글 깨짐 현상](변경 전.png)
+> 1. 문제 상황: 바인드 마운트를 통해 호스트의 `index.html`을 서빙한 결과, 브라우저 화면에서 한글 메시지가 정상적으로 출력되지 않고 깨진 문자로 나타남.
+> 2. 원인 분석: **문자 인코딩 미지정**
+> - 웹 브라우저가 HTML 파일을 읽을 때 어떤 문자 집합(Character Set)을 사용해야 하는지 명시되지 않음. 
+> - 기본 인코딩 설정이 한글을 지원하지 않는 방식으로 해석될 경우, 2바이트 이상인 한글 데이터가 손실되어 깨짐 현상이 발생함.
+> 3. 해결 방법: HTML 소스코드의 `<head>` 섹션 내부에 문서 인코딩 형식을 정의하는 메타 태그를 추가함.
+![after: 한글 깨짐 현상 해결](변경 후.png)
+
+## 9. Docker 볼륨
 ## (1) 볼륨 생성 및 컨테이너 연결
 ```bash
 $ docker volume create my-db-data
@@ -412,7 +447,7 @@ root@e584d9456a63:/
 $ cat /app/data/persistence_test.txt
 This data is persistent!
 ```
-# 9. Git 설정 및 GitHub 연동
+# 10. Git 설정 및 GitHub 연동
 ## (1) Git 사용자 정보 설정
 ### 1. 사용자 이름 밒 이메일 설정
 ```bash
