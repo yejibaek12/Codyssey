@@ -1,16 +1,18 @@
 # **프로젝트 개요** 
 Terminal, Docker, Git/GitHub을 활용하여 어디서든 동일하게 작동하는 재현 가능한 AI/SW 개발 워크스테이션을 구축을 목표로 한다. Terminal을 통해 작업 디렉토리 체계와 보완 권한을 설정하고, Docker를 이용해 독립된 컨테이너 환경을 실행 및 관리한다. Dockerfile로  웹 서버를 컨테이너화고, 포트 매핑을 통한 서비스 접속, 바인드 마운트를 이용한 실시간 변경 사항 반영, 그리고 Docker 볼륨을 통한 데이터 영속성 유지를 검증한다.
 
-# 1. 실행 환경
+<br>
 
+# 1. 실행 환경
 - OS: MacOS 15.7.4
 - Shell: zsh 5.9
 - terminal: VS Code Intergrated Terminal (1.112.0)
 - Docker: 28.5.2
 - Git: 2.53
 
-# 2. 수행 체크리스트
+<br>
 
+# 2. 수행 체크리스트
 - [X] 터미널 기본 조작 및 폴더 구성
 - [X] 권한 변경 실습
 - [X] Docker 설치/점검
@@ -21,8 +23,9 @@ Terminal, Docker, Git/GitHub을 활용하여 어디서든 동일하게 작동하
 - [X] 볼륨 영속성
 - [X] Git 설정 + VSCode GitHub 연동
 
-# 3. 터미널 조작 로그 기록
+<br>
 
+# 3. 터미널 조작 로그 기록
 ## (1) 현재 위치 확인
 ```bash
 $ pwd
@@ -145,6 +148,7 @@ drwx------+ 5 byjol4324  byjol4324  160 Apr  4 15:37 .
 > | **Dockerfile** | 이미지를 어떻게 만들지 적어둔 메모장 | 도시락 주문서/레시피(재료와 조리법이 적힌 종이) |
 > | **Images** | 실행만 하면 바로 프로그램이 나오는 저장 상태 | 냉동 밀키트(뜯어서 데우기만 하면 됨) |
 > | **Container** | 이미지를 실제로 실행해서 쓰고 있는 상태 | 실제로 손님 앞에 놓여서 먹을 수 있는 상태 |
+
 ## (1) Docker 설치 및 상태 점검
 ### 1. 버전 확인
 ```bash
@@ -243,9 +247,7 @@ c62fc68e0a62   ubuntu        "/bin/bash"   20 minutes ago   Up 3 minutes        
 
 > **`$ docker attach my-ubuntu`로 재접속한 뒤, <br> ** `$ exit` 하는 경우에는 실행이 완전히 종료된다.
 
-<br>
-
-💡  **컨테이너 종료 방식 비교 (exit vs stop vs kill)**
+### 💡  **컨테이너 종료 방식 비교 (exit vs stop vs kill)**
 > 1. `exit` 
 > - `docker attach` 나 `exec` 로 들어간 터미널에서 입력할 때
 > - 실행 중인 메인 프로세스가 종료되면서 컨테이너도 안전하게 멈춤
@@ -265,7 +267,7 @@ $ mkdir src/
 $ cd src/
 $ touch index.html
 ```
-> 웹 서버 소스코드란? <br>
+> **웹 서버 소스코드란?** <br>
 > - 웹 사이트를 만들기 위해 작성한 설계도와 재료들을 통칭
 > - 보통 실제 웹 화면을 구성하는 원본(Source) 데이터 파일은 `src/`에, 실행 가능한 앱 설정 및 라이브러리 파일은`app/`에 담음 <br>
 >
@@ -346,7 +348,7 @@ $ curl http://localhost:80
 <h1>Hello from Yeji's Nginx Server!</h1><p>My name is Yeji</p>
 ```
 
-## ⚠️ **트러블 슈팅**
+### ⚠️ **트러블 슈팅**
 > 1. 문제 상황
 > - `docker exec -it` 명령어를 통해 컨테이너 내부로 진입 <br>
 > `docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu`, <br>
@@ -406,7 +408,7 @@ $ docker run -d -p 8080:80 --name yeji-bind-test \
   my-nginx-ubuntu
   # `:` 를 기준으로 [내 컴퓨터 주소] : [컨테이너 주소] 
   ```
-## ⚠️ **트러블 슈팅** 
+### ⚠️ **트러블 슈팅** 
 ![before: 한글 깨짐 현상](trouble.png) <br>
 > 1. 문제 상황: 바인드 마운트를 통해 호스트의 `index.html`을 서빙한 결과, 브라우저 화면에서 한글 메시지가 정상적으로 출력되지 않고 깨진 문자로 나타남.
 > 2. 원인 분석: **문자 인코딩 미지정**
@@ -415,6 +417,8 @@ $ docker run -d -p 8080:80 --name yeji-bind-test \
 > 3. 해결 방법: HTML 소스코드의 `<head>` 섹션 내부에 문서 인코딩 형식을 정의하는 메타 태그를 추가함. <br> `meta charset="UTF-8"`
 
 ![after: 한글 깨짐 현상 해결](after.png)
+
+<br>
 
 ## 9. Docker 볼륨
 ## (1) 볼륨 생성 및 확인
@@ -454,6 +458,8 @@ $ docker run -d -p 8082:80 --name yeji-new-server \
 >
 > ![사이트 접속 후 확인](8082.png)
 
+<br>
+
 # 10. Git 설정 및 GitHub 연동
 ## (1) Git 사용자 정보 설정
 ### 1. 사용자 이름 밒 이메일 설정
@@ -467,38 +473,49 @@ $ git config --list | grep user
 user.name=yejibaek12
 user.email=byjol@naver.com
 ```
-## (2) 로컬 저장소 초기화 및 커밋 
+## (2) GitHub 연동
 ### 1. 현재 폴더를 Git 저장소로 초기화
 ```bash
 $ git init
 ```
-### 2. 기본 브랜치 이름을 main으로 변경
+### 2. 기본 브랜치 이름을 master로 변경
 ```bash
-$ git config --global init.defaultBranch main
+$ git config --global init.defaultBranch master
 ```
-### 3. 모든 파일 스테이징
+### 3. GitHub 원격 저장소 연동 (최초 연결)
+```bash
+$ git remote add origin https://github.com/yejibaek12/Codyssey.git
+```
+### 4. 연동 상태 확인
+```bash
+$ git remote -v
+origin  https://github.com/yejibaek12/Codyssey.git (fetch)
+origin  https://github.com/yejibaek12/Codyssey.git (push)
+```
+## (3) GitHub로 파일 업로드
+### 1. 모든 파일 스테이징
 ```bash
 $ git add .
 ```
-
-### 4. 커밋 생성
+### 2. 커밋 생성
 ```bash
 $ git commit -m "Add Docker volume test results"
 ```
-## (3) GitHub 원격 저장소 연동 (최초 연결)
-### 1. GitHub 원격 저장소 주소 등록
-```bash
-$ git remote add origin https://github.com/yejibaek12/260404.git
-```
-### 2. 연동 상태 확인
-```bash
-$ git remote -v
-origin  https://github.com/yejibaek12/260404.git (fetch)
-origin  https://github.com/yejibaek12/260404.git (push)
-```
-## (4) GitHub로 파일 업로드
+### 3. 원격 저장소로 업로드
 ```bash
 $ git push -u origin master
-# 최초 실행 시에만 -u 옵션을 사용하여 원격 브랜치와 연결
-# 이후부터는 간단히 git push 만으로 업로드 가능
 ```
+> 최초 실행 시에만 -u 옵션을 사용하여 원격 브랜치와 연결 <br>
+> 이후로는 간단히 git push 만으로 업로드 가능
+
+### 💡 마지막 커밋 수정하기
+```bash
+# 1. 수정 사항 스테이징
+git add .
+# 2. 마지막 커밋에 덮어쓰기 
+git commit --amend --no-edit 
+# 3. 원격 저장소에 강제 업데이트
+git push origin master --force
+``` 
+
+1차 완료
