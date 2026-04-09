@@ -512,7 +512,7 @@ $ git push -u origin master
 > 최초 실행 시에만 -u 옵션을 사용하여 원격 브랜치와 연결 <br>
 > 이후로는 간단히 git push 만으로 업로드 가능
 
-### 4. 마지막 커밋 수정하기
+## 💡 마지막 커밋 수정하기
 ```bash
 # 1. 수정 사항 스테이징
 git add .
@@ -522,7 +522,7 @@ git commit --amend --no-edit
 git push origin master --force
 ``` 
 
-### 5. 한 번에 변경사항 반영하기
+## 💡 한 번에 변경사항 반영하기
 ```bash
 # 1. 파일 이름 변경 (동시에 스테이징)
 git mv [기존 파일명] [변경할 파일명]
@@ -530,4 +530,17 @@ git mv [기존 파일명] [변경할 파일명]
 git commit -, "커밋 이름"
 # 3. 깃허브로 업로드
 git push 
+``` 
+
+## 💡 깃허브에 불필요한 시스템 파일 제외 설정
+```bash
+# 1. 깃허브에서 삭제하기 (내 컴퓨터 파일은 유지)
+$ git rm --cached .DS_Store
+# 2. .gitignore 파일 생성 및 설정 등록
+$ touch .gitignore
+$ echo ".DS_Store" >> .gitignore
+# 3. 커밋하고 푸시
+$ git add .gitignore
+$ git commit -m "chore: .DS_Store 제외 설정"
+$ git push
 ``` 
