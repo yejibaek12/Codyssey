@@ -1,5 +1,12 @@
 # **프로젝트 개요** 
-Terminal, Docker, Git/GitHub을 활용하여 어디서든 동일하게 작동하는 재현 가능한 AI/SW 개발 워크스테이션을 구축을 목표로 한다. Terminal을 통해 작업 디렉토리 체계와 보완 권한을 설정하고, Docker를 이용해 독립된 컨테이너 환경을 실행 및 관리한다. Dockerfile로  웹 서버를 컨테이너화고, 포트 매핑을 통한 서비스 접속, 바인드 마운트를 이용한 실시간 변경 사항 반영, 그리고 Docker 볼륨을 통한 데이터 영속성 유지를 검증한다.
+**Terminal**, **Docker**, **Git/GitHub**를 활용하여 어디서든 동일하게 작동하는 **AI/SW 개발 워크스테이션** 구축을 목표로 한다. <br>
+
+**주요 수행 내용**
+- **Terminal**: 효율적인 작업 디렉토리 체계 구축, 파일 권한 설정을 통해 시스템 제어 기반 마련
+- **Docker**: 독립된 컨테이너 환경을 실행 및 관리, 직접 작성한 Dockerfile을 이용해 웹 서버 컨테이너화
+- **네트워크 및 서비스 접속**: 포트 매핑을 통해 호스트와 컨테이너를 연결하고, 브라우저 및 curl 응답으로 서비스 접속을 확인
+- **실시간 변경 및 데이터 관리**: 바인드 마운트로 실시간 코드 변경 사항을 반영하고, Docker 볼륨을 활용해 컨테이너 삭제 후에도 데이터가 유지되는 영속성을 검증
+- **버전 관리 및 협업**: Git으로 로컬 소스코드를 관리하고 GitHub 원격 저장소와 연동하여 협업 가능한 개발 기반을 마련
 
 <br>
 
@@ -380,7 +387,7 @@ $ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
 ## (3) 최종 결과 확인
 - **접속 주소:** http://localhost:8080
 
-![Nginx 서버 접속 결과](result.png)
+![Nginx 서버 접속 결과](screenshot/result.png)
 
 <br>
 
@@ -405,24 +412,29 @@ $ docker rm yeji-web
 
 ## (3) 바인드 마운트로 다시 실행하기(실시간 수정 확인)
 ### 기존 화면
-![before: 한글 깨짐 현상](before.png)
+![before: 한글 깨짐 현상](screenshot/before.png)
 ```bash 
-$ docker run -d -p 8080:80 --name yeji-bind-test \
-  -v $(pwd)/src:/var/www/html \
-  my-nginx-ubuntu
+$ docker run -d -p 8080:80 --name yeji-bind-test -v $(pwd)/src:/var/www/html my-nginx-ubuntu
   # `:` 를 기준으로 [내 컴퓨터 주소] : [컨테이너 주소] 
   ```
 ### ⚠️ **트러블 슈팅** 
-![before: 한글 깨짐 현상](trouble.png) <br>
+![before: 한글 깨짐 현상](screenshot/trouble.png) <br>
 > 1. 문제 상황: 바인드 마운트를 통해 호스트의 `index.html`을 서빙한 결과, 브라우저 화면에서 한글 메시지가 정상적으로 출력되지 않고 깨진 문자로 나타남.
 > 2. 원인 분석: **문자 인코딩 미지정**
 > - 웹 브라우저가 HTML 파일을 읽을 때 어떤 문자 집합(Character Set)을 사용해야 하는지 명시되지 않음. 
 > - 기본 인코딩 설정이 한글을 지원하지 않는 방식으로 해석될 경우, 2바이트 이상인 한글 데이터가 손실되어 깨짐 현상이 발생함.
 > 3. 해결 방법: HTML 소스코드의 `<head>` 섹션 내부에 문서 인코딩 형식을 정의하는 메타 태그를 추가함. <br> `meta charset="UTF-8"`
 
-![after: 한글 깨짐 현상 해결](after.png)
+![after: 한글 깨짐 현상 해결](screenshot/after.png)
 
-<br>
+### 💡 호스트 포트 중복되는 경우
+> 1. 오류 메시지를 통해 어떤 호스트 포트가 충돌을 일으켰는지 파악 
+> 2. 어떤 프로그램 혹은 서비스가 해당 포트를 쓰고 있는지 확인
+> `lsof -i :<포트번호>` 또는 `netstat -ano | grep <포트번호>`
+> 3. 기존 컨테이너 중복 확인
+> `docker ps`로 실행 중인 컨테이너 목록 확인, `docker ps -a`로 중지된 컨테이너 중 포트 점유 확인
+> 4. 충돌하는 프로세스를 종료할 수 없는 경우, 포트 매핑 설정(호스트 포트 번호)을 변경
+
 
 ## 9. Docker 볼륨
 ## (1) 볼륨 생성 및 확인
@@ -446,7 +458,7 @@ $ exit
 ```
 > `localhost:8081/test.txt` 접속 후 확인 
 >
-> ![사이트 접속 후 확인](8081.png)
+> ![사이트 접속 후 확인](screenshot/8081.png)
 
 ### 2. 컨테이너 삭제
 ```bash
@@ -454,13 +466,11 @@ $ docker rm -f yeji-vol-test
 ```
 ### 3. 새로운 컨테이너를 동일한 볼륨에 연결하여 실행
 ```bash
-$ docker run -d -p 8082:80 --name yeji-new-server \
-  -v my-db-data:/var/www/html \
-  my-nginx-ubuntu
+$ docker run -d -p 8082:80 --name yeji-new-server -v my-db-data:/var/www/html   my-nginx-ubuntu
 ```
 > `localhost:8082/test.txt` 접속 후 확인
 >
-> ![사이트 접속 후 확인](8082.png)
+> ![사이트 접속 후 확인](screenshot/8082.png)
 
 <br>
 
