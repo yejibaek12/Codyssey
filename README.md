@@ -325,7 +325,8 @@ $ COPY src/ /var/www/html/
 
 #### ④ 메인 프로세스 설정
 ```bash
-CMD ["nginx", "-g", "daemon off;"]
+# 나중에 이 이미지로 컨테이너를 만들었을 때 어떤 명령어를 자동으로 실행할지 예약해두는 것
+CMD ["nginx", "-g", "daemon off;"] 
 ```
 > 도커 컨테이너는 내부에 실행 중인 메인 프로세스가 종료되면 컨테이너 자체도 함께 종료됨. `Nginx`는 기본적으로 백그라운드에서 실행되는 '데몬' 방식이지만, 이를 포그라운드(`daemon off;`)에서 실행하도록 설정하여 웹 서버 컨테이너가 의도치 않게 종료되지 않고, 안정적으로 유지되도록 함. 
 
@@ -353,7 +354,6 @@ $ docker exec -it yeji-web bash
 $ echo $MY_NAME
 Yeji
 
-$ docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu
 $ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
 $ curl http://localhost:80
 <h1>Hello from Yeji's Nginx Server!</h1><p>My name is Yeji</p>
@@ -376,16 +376,21 @@ $ curl http://localhost:80
 # 7. 포트 매핑
 ## (1) 컨테이너 생성 및 포트 연결
 ```bash
+# 둘 중 하나 실행
 $ docker run -it -p 8080:80 --name yeji-web my-nginx-ubuntu
-```
-
-## (2) 컨테이너 실행
-```bash
 $ docker run -d -p 8080:80 --name yeji-web my-nginx-ubuntu
 ```
+| 구분 | `-it` (Interactive + TTY) | `-d` (Detached) |
+| :--- | :--- | :--- |
+| **명칭** | 대화형 전면 실행(Foreground) | 백그라운드 실행(Background) |
+| **주요 특징** | 현재 터미널과 컨테이너가 직접 연결됨 | 컨테이너가 뒤에서 독립적으로 실행됨 | 
+| **로그 확인** | 실시간으로 화면에 출력됨 | `docker logs` 명령어로 별도 확인 필요 | 
+| **터미널 상태** | 컨테이너에 점유되어 다른 입력 불가 | 명령어 실행 후 바로 다음 입력 가능 |
+| **종료 영향** | `Ctrl + C` 입력 시 컨테이너 종료됨 | 터미널을 닫아도 컨테이너는 계속 유지됨 |
+| **주요 용도** | 디버깅, 초기 설정 테스트, 쉘 접속 | 웹 서버, DB 등 상시 가동 서비스 |
 
-## (3) 최종 결과 확인
-- **접속 주소:** http://localhost:8080
+## (2) 최종 결과 확인
+**접속 주소:** http://localhost:8080
 
 ![Nginx 서버 접속 결과](screenshot/result.png)
 
@@ -405,6 +410,9 @@ CONTAINER ID   IMAGE             COMMAND                  CREATED       STATUS  
 $ docker stop yeji-web
 $ docker rm yeji-web
 ```
+> 
+> *이미지 삭제 명령어 `rmi`
+
 > **기존 컨테이너 정리 이유**
 > 1. 네트워크 충돌 방지: 호스트의 특정포트(예: 8080)는 한 번에 하나의 프로세스만 점유할 수 있음. 기존 컨테이너가 8080 포트를 사용 중이면, 동일한 포트를 사용하는 새 컨테이너 실행할 때 에러가 발생함. 
 > 2. 컨테이너 이름 중복 방지: 동일한 이름을 가진 컨테이너가 존재할 경우, 같은 이름으로 새 컨테이너 생성 불가능. 
@@ -492,15 +500,11 @@ user.email=byjol@naver.com
 ```bash
 $ git init
 ```
-### 2. 기본 브랜치 이름을 master로 변경
-```bash
-$ git config --global init.defaultBranch master
-```
-### 3. GitHub 원격 저장소 연동 (최초 연결)
+### 2. GitHub 원격 저장소 연동 (최초 연결)
 ```bash
 $ git remote add origin https://github.com/yejibaek12/Codyssey.git
 ```
-### 4. 연동 상태 확인
+### 3. 연동 상태 확인
 ```bash
 $ git remote -v
 origin  https://github.com/yejibaek12/Codyssey.git (fetch)
@@ -517,7 +521,7 @@ $ git commit -m "Add Docker volume test results"
 ```
 ### 3. 원격 저장소로 업로드
 ```bash
-$ git push -u origin master
+$ git push -u origin main
 ```
 > 최초 실행 시에만 -u 옵션을 사용하여 원격 브랜치와 연결 <br>
 > 이후로는 간단히 git push 만으로 업로드 가능
