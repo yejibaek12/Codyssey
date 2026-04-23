@@ -30,6 +30,19 @@
 - [X] 볼륨 영속성
 - [X] Git 설정 + VSCode GitHub 연동
 
+## Project Structure
+
+```text
+Codyssey/
+├── screenshot/
+├── src/
+│   ├── index.html
+│   └── test_file.txt
+├── .gitignore
+├── Dockerfile
+└── README.md
+```
+
 <br>
 
 # 3. 터미널 조작 로그 기록
